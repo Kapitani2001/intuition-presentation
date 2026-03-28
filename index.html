@@ -614,8 +614,10 @@ body:hover #navbar { opacity: 1; }
     </svg>
   </div>
 
+  <!-- All circles centered on x=26% (center of a 18% wide element = left:17%) -->
+
   <!-- Superconscious Mind circle (top) -->
-  <div class="shape anim-hidden" data-spid="dm3" style="position:absolute;left:16%;top:14%;width:20%;height:18%;opacity:0;visibility:hidden">
+  <div class="shape anim-hidden" data-spid="dm3" style="position:absolute;left:17%;top:14%;width:18%;height:17%;opacity:0;visibility:hidden">
     <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(168,85,247,0.06));border:2.5px solid #a855f7;display:flex;flex-direction:column;align-items:center;justify-content:center">
       <p><span style="font-size:calc(10.0pt * var(--scale));color:#7c3aed"><b>Super-</b></span></p>
       <p><span style="font-size:calc(10.0pt * var(--scale));color:#7c3aed"><b>conscious</b></span></p>
@@ -624,7 +626,7 @@ body:hover #navbar { opacity: 1; }
   </div>
 
   <!-- Conscious Mind circle (middle) -->
-  <div class="shape anim-hidden" data-spid="dm1" style="position:absolute;left:18%;top:36%;width:17%;height:17%;opacity:0;visibility:hidden">
+  <div class="shape anim-hidden" data-spid="dm1" style="position:absolute;left:17%;top:37%;width:18%;height:17%;opacity:0;visibility:hidden">
     <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,rgba(30,17,69,0.1),rgba(30,17,69,0.04));border:2.5px solid #1e1145;display:flex;flex-direction:column;align-items:center;justify-content:center">
       <p><span style="font-size:calc(10.0pt * var(--scale));color:#1e1145"><b>Conscious</b></span></p>
       <p><span style="font-size:calc(8.0pt * var(--scale));color:#1e1145">Mind</span></p>
@@ -632,28 +634,25 @@ body:hover #navbar { opacity: 1; }
   </div>
 
   <!-- Unconscious Mind circle (bottom) -->
-  <div class="shape anim-hidden" data-spid="dm2" style="position:absolute;left:14%;top:57%;width:19%;height:18%;opacity:0;visibility:hidden">
+  <div class="shape anim-hidden" data-spid="dm2" style="position:absolute;left:17%;top:60%;width:18%;height:17%;opacity:0;visibility:hidden">
     <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,rgba(30,17,69,0.06),rgba(30,17,69,0.02));border:2.5px solid rgba(30,17,69,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center">
       <p><span style="font-size:calc(10.0pt * var(--scale));color:rgba(30,17,69,0.7)"><b>Unconscious</b></span></p>
       <p><span style="font-size:calc(8.0pt * var(--scale));color:rgba(30,17,69,0.7)">Mind</span></p>
     </div>
   </div>
 
-  <!-- Arrow: Conscious → Unconscious -->
-  <div class="shape anim-hidden" data-spid="da1" style="position:absolute;left:25%;top:52%;width:8%;min-height:5%;opacity:0;visibility:hidden;text-align:center">
+  <!-- Arrow: Conscious → Unconscious (centered at 26%) -->
+  <div class="shape anim-hidden" data-spid="da1" style="position:absolute;left:24%;top:54%;width:4%;min-height:5%;opacity:0;visibility:hidden;text-align:center">
     <p><span style="font-size:calc(18.0pt * var(--scale));color:#1e1145">&#8595;</span></p>
-    <p><span style="font-size:calc(7.0pt * var(--scale));color:#888">access</span></p>
   </div>
 
-  <!-- Arrow: Unconscious → Superconscious -->
-  <div class="shape anim-hidden" data-spid="da2" style="position:absolute;left:8%;top:34%;width:8%;min-height:26%;opacity:0;visibility:hidden">
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">
-      <svg viewBox="0 0 40 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:calc(24pt * var(--scale));height:calc(70pt * var(--scale))">
-        <path d="M 30 110 C 5 90, 5 30, 20 10" stroke="#a855f7" stroke-width="2" fill="none"/>
-        <polygon points="16,10 24,10 20,2" fill="#a855f7"/>
-      </svg>
-      <p style="position:absolute;left:-2%;top:42%"><span style="font-size:calc(7.0pt * var(--scale));color:#a855f7">access</span></p>
-    </div>
+  <!-- Arrow: Unconscious → Superconscious (curved, left side) -->
+  <div class="shape anim-hidden" data-spid="da2" style="position:absolute;left:6%;top:18%;width:12%;height:56%;opacity:0;visibility:hidden">
+    <svg viewBox="0 0 60 280" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+      <!-- Curved arrow from bottom-right up to top-right -->
+      <path d="M 48 260 C 10 220, 10 60, 40 20" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+      <polygon points="36,20 44,20 40,10" fill="#a855f7"/>
+    </svg>
   </div>
 
   <!-- ── RIGHT SIDE: Explanation ── -->

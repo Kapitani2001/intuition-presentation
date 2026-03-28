@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Intuition — Superconscious Awareness</title>
+<style>
+:root {
+  --scale: 1;
+  --slide-w: 720px;
+  --slide-h: 540px;
+  --progress: 0%;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #0f0a1a;
+  font-family: 'Segoe UI', 'Calibri', 'Arial', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Progress bar ── */
+#progressBar {
+  position: fixed; top: 0; left: 0;
+  width: var(--progress); height: 3px;
+  background: linear-gradient(90deg, #a78bfa, #7c3aed);
+  z-index: 1000;
+  transition: width 0.35s ease;
+}
+
+/* ── Canvas wrapper ── */
+#slideCanvas {
+  position: absolute;
+  width: var(--slide-w); height: var(--slide-h);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Individual slides ── */
+.slide {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease;
+  overflow: hidden;
+}
+.slide.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+/* ── Shape base ── */
+.shape {
+  position: absolute;
+  overflow: visible;
+  line-height: 1.35;
+}
+.shape p {
+  margin-bottom: calc(3pt * var(--scale));
+  line-height: 1.4;
+}
+.shape p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Fill-color shapes ── */
+.shape.has-fill {
+  overflow: visible;
+}
+.shape.has-fill > .fill-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 0;
+}
+.shape.has-fill > .fill-content {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+}
+
+.shape.has-fill.dark-fill,
+.shape.has-fill.dark-fill .fill-content {
+  color: #fff;
+}
+
+/* ── Text shapes ── */
+.shape.text-shape {
+  overflow: visible;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ── Image shapes ── */
+.shape.image-shape {
+  overflow: hidden;
+}
+.shape.image-shape img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ── Animation: entrance hidden state ── */
+.shape.anim-entrance, .anim-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ── Animation: wipe clips ── */
+@keyframes wipeRight  { from { clip-path: inset(0 100% 0 0); }   to { clip-path: inset(0 0 0 0); } }
+@keyframes wipeLeft   { from { clip-path: inset(0 0 0 100%); }   to { clip-path: inset(0 0 0 0); } }
+@keyframes wipeDown   { from { clip-path: inset(0 0 100% 0); }   to { clip-path: inset(0 0 0 0); } }
+@keyframes wipeUp     { from { clip-path: inset(100% 0 0 0); }   to { clip-path: inset(0 0 0 0); } }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes emphPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes glowPulse {
+  0%   { box-shadow: 0 0 8px rgba(124,58,237,0.3); }
+  50%  { box-shadow: 0 0 24px rgba(124,58,237,0.6); }
+  100% { box-shadow: 0 0 8px rgba(124,58,237,0.3); }
+}
+
+/* ── Navbar ── */
+#navbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 44px;
+  background: rgba(15,10,26,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 900;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#navbar:hover, #navbar.visible {
+  opacity: 1;
+}
+body:hover #navbar { opacity: 1; }
+
+#navbar button {
+  background: none; border: none;
+  color: #ccc; font-size: 20px;
+  cursor: pointer; padding: 4px 10px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+#navbar button:hover {
+  color: #fff; background: rgba(255,255,255,0.1);
+}
+#slideCounter {
+  color: #aaa; font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  min-width: 60px; text-align: center;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+#slideCounter:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+/* Slide jump overlay */
+#jumpOverlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#jumpOverlay.open { display: flex; }
+#jumpBox {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  width: 300px; max-width: 90vw;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  animation: modalIn 0.2s ease;
+  text-align: center;
+}
+#jumpBox h3 {
+  margin: 0 0 14px; font-size: 16px; color: #333;
+}
+#jumpInput {
+  width: 100%; border: 2px solid #7c3aed;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 22px; font-family: inherit;
+  text-align: center; outline: none;
+  font-variant-numeric: tabular-nums;
+}
+#jumpInput:focus { border-color: #5b21b6; }
+#jumpHint {
+  margin-top: 10px; font-size: 12px; color: #888;
+}
+
+/* ── Suggest Edit button ── */
+#suggestBtn {
+  position: fixed;
+  bottom: 54px; right: 16px;
+  background: #7c3aed;
+  color: #fff;
+  border: none; border-radius: 50%;
+  width: 44px; height: 44px;
+  font-size: 20px; line-height: 44px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  z-index: 950;
+  transition: background 0.2s, transform 0.2s;
+}
+#suggestBtn:hover {
+  background: #6d28d9;
+  transform: scale(1.08);
+}
+
+/* ── Modal overlay ── */
+#modalOverlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#modalOverlay.open { display: flex; }
+
+#suggestModal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  width: 380px; max-width: 92vw;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+#suggestModal h3 {
+  margin: 0 0 18px; font-size: 18px; color: #222;
+}
+#suggestModal label {
+  display: block; font-size: 13px; color: #555;
+  margin-bottom: 4px; margin-top: 12px;
+}
+#suggestModal input,
+#suggestModal textarea {
+  width: 100%; border: 1px solid #ccc;
+  border-radius: 6px; padding: 8px 10px;
+  font-size: 14px; font-family: inherit;
+  transition: border-color 0.2s;
+}
+#suggestModal input:focus,
+#suggestModal textarea:focus {
+  outline: none; border-color: #7c3aed;
+}
+#suggestModal textarea { height: 100px; resize: vertical; }
+#suggestModal .modal-actions {
+  display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px;
+}
+#suggestModal .modal-actions button {
+  padding: 8px 20px; border-radius: 6px;
+  font-size: 14px; cursor: pointer; border: none;
+  transition: background 0.2s;
+}
+#suggestModal .btn-cancel {
+  background: #e0e0e0; color: #333;
+}
+#suggestModal .btn-cancel:hover { background: #ccc; }
+#suggestModal .btn-submit {
+  background: #7c3aed; color: #fff;
+}
+#suggestModal .btn-submit:hover { background: #6d28d9; }
+#suggestModal .btn-submit:disabled {
+  background: #c4b5fd; cursor: not-allowed;
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed;
+  bottom: 60px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #323232; color: #fff;
+  padding: 10px 24px; border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 3000;
+  pointer-events: none;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+<div id="progressBar"></div>
+<div id="navbar">
+  <button id="navPrev" title="Previous" aria-label="Previous slide">&#9664;</button>
+  <span id="slideCounter">1 / 1</span>
+  <button id="navNext" title="Next" aria-label="Next slide">&#9654;</button>
+</div>
+<button id="suggestBtn" title="Suggest an edit" aria-label="Suggest an edit">&#9998;</button>
+<div id="modalOverlay">
+  <div id="suggestModal">
+    <h3>Suggest an Edit</h3>
+    <label for="suggestName">Name (optional)</label>
+    <input type="text" id="suggestName" placeholder="Your name" autocomplete="name">
+    <label for="suggestText">Suggestion</label>
+    <textarea id="suggestText" placeholder="Describe your suggestion..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modalCancel">Cancel</button>
+      <button class="btn-submit" id="modalSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="jumpOverlay">
+  <div id="jumpBox">
+    <h3>Go to Slide</h3>
+    <input type="number" id="jumpInput" min="1" placeholder="Slide number...">
+    <div id="jumpHint">Press Enter to jump, Esc to cancel</div>
+  </div>
+</div>
+<div id="slideCanvas">
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 1 — Title
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="1" data-clicks='[]' style="background:linear-gradient(135deg,#0f0a1a 0%,#1e1145 40%,#12082a 100%)">
+  <!-- Subtle radial glow -->
+  <div style="position:absolute;top:20%;left:50%;width:60%;height:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(124,58,237,0.15) 0%,transparent 70%);pointer-events:none"></div>
+
+  <!-- Pre-title -->
+  <div class="shape" data-spid="t1" style="position:absolute;left:10%;top:22%;width:80%;min-height:5%;color:rgba(167,139,250,0.85);letter-spacing:3px;text-align:center">
+    <p><span style="font-size:calc(14.0pt * var(--scale));text-transform:uppercase">Superconscious Awareness</span></p>
+  </div>
+
+  <!-- Main title -->
+  <div class="shape" data-spid="t2" style="position:absolute;left:10%;top:32%;width:80%;min-height:14%;color:#fff;text-align:center">
+    <p><span style="font-size:calc(54.0pt * var(--scale));letter-spacing:2px"><b>Intuition</b></span></p>
+  </div>
+
+  <!-- Subtitle -->
+  <div class="shape" data-spid="t3" style="position:absolute;left:15%;top:52%;width:70%;min-height:5%;color:rgba(255,255,255,0.65);text-align:center">
+    <p><span style="font-size:calc(15.0pt * var(--scale));font-style:italic">Your genius within — gathering perspective<br>from beyond ordinary experience</span></p>
+  </div>
+
+  <!-- Divider line -->
+  <div style="position:absolute;left:35%;top:66%;width:30%;height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,0.5),transparent)"></div>
+
+  <!-- Presenter -->
+  <div class="shape" data-spid="t4" style="position:absolute;left:10%;top:72%;width:80%;min-height:6%;color:#fff;text-align:center">
+    <p><span style="font-size:calc(16.0pt * var(--scale))"><b>Presented by Adham Elmeligy</b></span></p>
+  </div>
+
+  <!-- Bottom bar -->
+  <div style="position:absolute;left:0;bottom:0;width:100%;height:10%;background:rgba(124,58,237,0.12);display:flex;align-items:center;justify-content:center">
+    <span style="font-size:calc(11.0pt * var(--scale));color:rgba(167,139,250,0.6);letter-spacing:1px">The Coherence Scale</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 2 — What Is Intuition?
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="2" data-clicks='[[{"spid":"w1","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"500"}],[{"spid":"w2","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"500"}],[{"spid":"w3","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"500"}],[{"spid":"w4","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"500"}],[{"spid":"w5","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"500"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="wt" style="position:absolute;left:6%;top:5%;width:88%;min-height:8%">
+    <p><span style="font-size:calc(26.0pt * var(--scale));color:#1e1145"><b>What Is Intuition?</b></span></p>
+  </div>
+
+  <!-- Point 1 -->
+  <div class="shape anim-hidden" data-spid="w1" style="position:absolute;left:6%;top:17%;width:88%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:10px;border-left:4px solid #7c3aed;padding:calc(8pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(10pt * var(--scale))">
+      <span style="font-size:calc(20.0pt * var(--scale));color:#7c3aed;font-weight:800;opacity:0.4">01</span>
+      <div>
+        <span style="font-size:calc(13.0pt * var(--scale));color:#1e1145"><b>Superconscious awareness</b></span><br>
+        <span style="font-size:calc(10.0pt * var(--scale));color:#666">Your "genius within" that gathers perspective from beyond ordinary experience and the five senses</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Point 2 -->
+  <div class="shape anim-hidden" data-spid="w2" style="position:absolute;left:6%;top:32%;width:88%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:10px;border-left:4px solid #a855f7;padding:calc(8pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(10pt * var(--scale))">
+      <span style="font-size:calc(20.0pt * var(--scale));color:#a855f7;font-weight:800;opacity:0.4">02</span>
+      <div>
+        <span style="font-size:calc(13.0pt * var(--scale));color:#1e1145"><b>Beyond the narrow bandwidth</b></span><br>
+        <span style="font-size:calc(10.0pt * var(--scale));color:#666">You are aware of only a tiny slice of what you process — intuition comes from beyond that slice</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Point 3 -->
+  <div class="shape anim-hidden" data-spid="w3" style="position:absolute;left:6%;top:47%;width:88%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:10px;border-left:4px solid #7c3aed;padding:calc(8pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(10pt * var(--scale))">
+      <span style="font-size:calc(20.0pt * var(--scale));color:#7c3aed;font-weight:800;opacity:0.4">03</span>
+      <div>
+        <span style="font-size:calc(13.0pt * var(--scale));color:#1e1145"><b>Not primarily verbal</b></span><br>
+        <span style="font-size:calc(10.0pt * var(--scale));color:#666">It comes through as impressions, symbols, and what "occurs to you" — not coherent story-language</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Point 4 -->
+  <div class="shape anim-hidden" data-spid="w4" style="position:absolute;left:6%;top:62%;width:88%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:10px;border-left:4px solid #a855f7;padding:calc(8pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(10pt * var(--scale))">
+      <span style="font-size:calc(20.0pt * var(--scale));color:#a855f7;font-weight:800;opacity:0.4">04</span>
+      <div>
+        <span style="font-size:calc(13.0pt * var(--scale));color:#1e1145"><b>Makes unusual connections</b></span><br>
+        <span style="font-size:calc(10.0pt * var(--scale));color:#666">Offers "inspired perspectives" — connecting things that are not normally connected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Point 5 -->
+  <div class="shape anim-hidden" data-spid="w5" style="position:absolute;left:6%;top:77%;width:88%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:10px;border-left:4px solid #7c3aed;padding:calc(8pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(10pt * var(--scale))">
+      <span style="font-size:calc(20.0pt * var(--scale));color:#7c3aed;font-weight:800;opacity:0.4">05</span>
+      <div>
+        <span style="font-size:calc(13.0pt * var(--scale));color:#1e1145"><b>Expands possibilities &amp; creativity</b></span><br>
+        <span style="font-size:calc(10.0pt * var(--scale));color:#666">Needing everything to make sense keeps you confined — letting go opens creative intelligence</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 3 — The Bandwidth (visual concept)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="3" data-clicks='[[{"spid":"bw1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}],[{"spid":"bw2","cls":"entr","delay":0,"filter":"wipe(down)","motion":"","dur":"700"}],[{"spid":"bw3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}]]' style="background:linear-gradient(180deg,#0f0a1a 0%,#1e1145 100%)">
+  <!-- Title -->
+  <div class="shape" data-spid="bwt" style="position:absolute;left:6%;top:5%;width:88%;min-height:6%;text-align:center">
+    <p><span style="font-size:calc(24.0pt * var(--scale));color:#fff"><b>Beyond the Narrow Bandwidth</b></span></p>
+  </div>
+
+  <!-- Vast field label -->
+  <div class="shape anim-hidden" data-spid="bw1" style="position:absolute;left:10%;top:16%;width:80%;min-height:20%;opacity:0;visibility:hidden;text-align:center">
+    <div style="border:2px dashed rgba(167,139,250,0.3);border-radius:16px;padding:calc(16pt * var(--scale));background:rgba(124,58,237,0.06)">
+      <p><span style="font-size:calc(13.0pt * var(--scale));color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase">What You Are Actually Processing</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(36.0pt * var(--scale));color:rgba(167,139,250,0.7)"><b>11,000,000</b></span></p>
+      <p><span style="font-size:calc(12.0pt * var(--scale));color:rgba(255,255,255,0.4)">bits per second</span></p>
+    </div>
+  </div>
+
+  <!-- Narrow slice -->
+  <div class="shape anim-hidden" data-spid="bw2" style="position:absolute;left:30%;top:44%;width:40%;min-height:16%;opacity:0;visibility:hidden;text-align:center">
+    <div style="border:3px solid #7c3aed;border-radius:12px;padding:calc(12pt * var(--scale));background:rgba(124,58,237,0.15)">
+      <p><span style="font-size:calc(11.0pt * var(--scale));color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase">Conscious Awareness</span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(28.0pt * var(--scale));color:#a855f7"><b>126</b></span></p>
+      <p><span style="font-size:calc(11.0pt * var(--scale));color:rgba(255,255,255,0.4)">bits per second (7 &#177; 2 chunks)</span></p>
+    </div>
+  </div>
+
+  <!-- Intuition label -->
+  <div class="shape anim-hidden" data-spid="bw3" style="position:absolute;left:10%;top:70%;width:80%;min-height:16%;opacity:0;visibility:hidden;text-align:center">
+    <div style="background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(168,85,247,0.1));border-radius:12px;padding:calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(20.0pt * var(--scale));color:#fff"><b>Intuition lives in the gap</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:rgba(255,255,255,0.6);font-style:italic">It gathers from the vast ocean of processing<br>that your conscious mind never sees</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 4 — Five Premises (overview)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="4" data-clicks='[[{"spid":"p1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"p2","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"p3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"p4","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"p5","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="pt" style="position:absolute;left:6%;top:4%;width:88%;min-height:8%">
+    <p><span style="font-size:calc(24.0pt * var(--scale));color:#1e1145"><b>What Intuition Requires</b></span></p>
+    <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Five key premises</span></p>
+  </div>
+
+  <!-- Premise 1 -->
+  <div class="shape anim-hidden" data-spid="p1" style="position:absolute;left:6%;top:18%;width:42%;min-height:14%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));height:100%">
+      <p><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px">Premise 1</span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(15.0pt * var(--scale));color:#fff"><b>Innocence Is the Bridge</b></span></p>
+      <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.7)">An empty, receptive state — not childish, but open</span></p>
+    </div>
+  </div>
+
+  <!-- Premise 2 -->
+  <div class="shape anim-hidden" data-spid="p2" style="position:absolute;left:52%;top:18%;width:42%;min-height:14%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,#a855f7,#9333ea);border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));height:100%">
+      <p><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px">Premise 2</span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(15.0pt * var(--scale));color:#fff"><b>Stop "Making Sense"</b></span></p>
+      <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.7)">Don't edit what comes because it feels unfamiliar</span></p>
+    </div>
+  </div>
+
+  <!-- Premise 3 -->
+  <div class="shape anim-hidden" data-spid="p3" style="position:absolute;left:6%;top:38%;width:42%;min-height:14%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,#6d28d9,#5b21b6);border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));height:100%">
+      <p><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px">Premise 3</span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(15.0pt * var(--scale));color:#fff"><b>Own What You Get</b></span></p>
+      <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.7)">Hold it and claim it — even if it feels impossible</span></p>
+    </div>
+  </div>
+
+  <!-- Premise 4 -->
+  <div class="shape anim-hidden" data-spid="p4" style="position:absolute;left:52%;top:38%;width:42%;min-height:14%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,#9333ea,#7e22ce);border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));height:100%">
+      <p><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px">Premise 4</span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(15.0pt * var(--scale));color:#fff"><b>Agenda Corrupts</b></span></p>
+      <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.7)">When something is at stake, intuition disappears</span></p>
+    </div>
+  </div>
+
+  <!-- Premise 5 -->
+  <div class="shape anim-hidden" data-spid="p5" style="position:absolute;left:22%;top:58%;width:56%;min-height:14%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));height:100%">
+      <p><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px">Premise 5</span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(15.0pt * var(--scale));color:#fff"><b>No Fixing. No Coaching.</b></span></p>
+      <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(9.0pt * var(--scale));color:rgba(255,255,255,0.7)">Be a clean channel of what is obvious — not a rescuer providing solutions</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 5 — Premise 1: Innocence Is the Bridge
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="5" data-clicks='[[{"spid":"i1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}],[{"spid":"i2","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}],[{"spid":"i3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Premise badge -->
+  <div style="position:absolute;right:6%;top:5%;background:#7c3aed;border-radius:20px;padding:calc(4pt * var(--scale)) calc(12pt * var(--scale))">
+    <span style="font-size:calc(10.0pt * var(--scale));color:#fff;text-transform:uppercase;letter-spacing:1px"><b>Premise 1</b></span>
+  </div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="it" style="position:absolute;left:6%;top:5%;width:65%;min-height:10%">
+    <p><span style="font-size:calc(28.0pt * var(--scale));color:#1e1145"><b>Innocence Is the Bridge</b></span></p>
+  </div>
+
+  <!-- Key insight 1 -->
+  <div class="shape anim-hidden" data-spid="i1" style="position:absolute;left:6%;top:22%;width:88%;min-height:16%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:12px;padding:calc(14pt * var(--scale)) calc(18pt * var(--scale))">
+      <p><span style="font-size:calc(14.0pt * var(--scale));color:#1e1145"><b>The first step to superconscious awareness</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555;font-style:italic">"We go into innocence by letting go of our need to know or our need to understand... allowing ourselves to be empty and not know."</span></p>
+    </div>
+  </div>
+
+  <!-- Key insight 2 -->
+  <div class="shape anim-hidden" data-spid="i2" style="position:absolute;left:6%;top:46%;width:88%;min-height:16%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:12px;padding:calc(14pt * var(--scale)) calc(18pt * var(--scale))">
+      <p><span style="font-size:calc(14.0pt * var(--scale));color:#1e1145"><b>An empty, receptive state</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555">Not a childish state — it is where you <b>stop gripping "knowing."</b> The child in innocence is an emptiness, a receptive state of mind.</span></p>
+    </div>
+  </div>
+
+  <!-- Key insight 3 -->
+  <div class="shape anim-hidden" data-spid="i3" style="position:absolute;left:6%;top:70%;width:88%;min-height:16%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(168,85,247,0.05));border:2px solid rgba(124,58,237,0.2);border-radius:12px;padding:calc(14pt * var(--scale)) calc(18pt * var(--scale))">
+      <p><span style="font-size:calc(14.0pt * var(--scale));color:#7c3aed"><b>Innocence is an agendaless state</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555">Always go back to the inner child... the creative child. Because innocence is the doorway through which everything flows.</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 6 — Premise 2: Stop Making Sense
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="6" data-clicks='[[{"spid":"sm1","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}],[{"spid":"sm2","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}],[{"spid":"sm3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Premise badge -->
+  <div style="position:absolute;right:6%;top:5%;background:#a855f7;border-radius:20px;padding:calc(4pt * var(--scale)) calc(12pt * var(--scale))">
+    <span style="font-size:calc(10.0pt * var(--scale));color:#fff;text-transform:uppercase;letter-spacing:1px"><b>Premise 2</b></span>
+  </div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="smt" style="position:absolute;left:6%;top:5%;width:65%;min-height:10%">
+    <p><span style="font-size:calc(28.0pt * var(--scale));color:#1e1145"><b>Stop "Making Sense"</b></span></p>
+  </div>
+
+  <!-- The problem -->
+  <div class="shape anim-hidden" data-spid="sm1" style="position:absolute;left:6%;top:22%;width:42%;min-height:28%;opacity:0;visibility:hidden">
+    <div style="background:#fee2e2;border-radius:12px;border-left:4px solid #ef4444;padding:calc(12pt * var(--scale)) calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(11.0pt * var(--scale));color:#991b1b;text-transform:uppercase;letter-spacing:1px"><b>What blocks it</b></span></p>
+      <p style="margin-top:calc(8pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#1e1145">Editing what comes through because it feels <b>unfamiliar</b> or doesn't fit your story</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#1e1145">Needing everything to be <b>logical</b> and <b>explainable</b></span></p>
+    </div>
+  </div>
+
+  <!-- The discipline -->
+  <div class="shape anim-hidden" data-spid="sm2" style="position:absolute;left:52%;top:22%;width:42%;min-height:28%;opacity:0;visibility:hidden">
+    <div style="background:#f0fdf4;border-radius:12px;border-left:4px solid #22c55e;padding:calc(12pt * var(--scale)) calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(11.0pt * var(--scale));color:#166534;text-transform:uppercase;letter-spacing:1px"><b>The discipline</b></span></p>
+      <p style="margin-top:calc(8pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#1e1145">Let it come through <b>as it is</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#1e1145">Intuition speaks a different <b>language</b> — honor that</span></p>
+    </div>
+  </div>
+
+  <!-- Bottom quote -->
+  <div class="shape anim-hidden" data-spid="sm3" style="position:absolute;left:10%;top:62%;width:80%;min-height:16%;opacity:0;visibility:hidden;text-align:center">
+    <div style="padding:calc(16pt * var(--scale))">
+      <p><span style="font-size:calc(18.0pt * var(--scale));color:#7c3aed;font-style:italic"><b>"Needing everything to make sense<br>keeps you confined to the known."</b></span></p>
+      <p style="margin-top:calc(8pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#888">Letting go of that opens creative intelligence</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 7 — Premise 3: Own What You Get
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="7" data-clicks='[[{"spid":"o1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"},{"spid":"o1a","cls":"entr","delay":300,"filter":"fade","motion":"","dur":"500"}],[{"spid":"o2","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"o3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Premise badge -->
+  <div style="position:absolute;right:6%;top:5%;background:#6d28d9;border-radius:20px;padding:calc(4pt * var(--scale)) calc(12pt * var(--scale))">
+    <span style="font-size:calc(10.0pt * var(--scale));color:#fff;text-transform:uppercase;letter-spacing:1px"><b>Premise 3</b></span>
+  </div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="ot" style="position:absolute;left:6%;top:5%;width:65%;min-height:10%">
+    <p><span style="font-size:calc(28.0pt * var(--scale));color:#1e1145"><b>Own What You Get</b></span></p>
+  </div>
+
+  <!-- Something occurs to you -->
+  <div class="shape anim-hidden" data-spid="o1" style="position:absolute;left:6%;top:22%;width:40%;min-height:20%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:12px;padding:calc(14pt * var(--scale));text-align:center">
+      <p><span style="font-size:calc(32.0pt * var(--scale))">&#128161;</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(14.0pt * var(--scale));color:#1e1145"><b>Something occurs to you</b></span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#666">An impression, a symbol, a knowing</span></p>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="shape anim-hidden" data-spid="o1a" style="position:absolute;left:47%;top:28%;width:6%;min-height:8%;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden">
+    <p><span style="font-size:calc(28.0pt * var(--scale));color:#7c3aed"><b>&#10132;</b></span></p>
+  </div>
+
+  <!-- Hold it and claim it -->
+  <div class="shape anim-hidden" data-spid="o2" style="position:absolute;left:54%;top:22%;width:40%;min-height:20%;opacity:0;visibility:hidden">
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:12px;padding:calc(14pt * var(--scale));text-align:center">
+      <p><span style="font-size:calc(32.0pt * var(--scale))">&#9995;</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(14.0pt * var(--scale));color:#fff"><b>Hold it. Claim it.</b></span></p>
+      <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:rgba(255,255,255,0.75)">Even if it feels impossible or uncomfortable</span></p>
+    </div>
+  </div>
+
+  <!-- Bottom teaching point -->
+  <div class="shape anim-hidden" data-spid="o3" style="position:absolute;left:8%;top:56%;width:84%;min-height:24%;opacity:0;visibility:hidden;text-align:center">
+    <div style="border:2px solid rgba(124,58,237,0.2);border-radius:12px;padding:calc(16pt * var(--scale))">
+      <p><span style="font-size:calc(14.0pt * var(--scale));color:#1e1145"><b>The training is to hold what you receive</b></span></p>
+      <p style="margin-top:calc(8pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#555">Another part of you will try to reject it as impossible, unreasonable, or uncomfortable.<br><br>That rejection is the conscious mind trying to maintain control.<br><b>Let the intuition stand.</b></span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 8 — Premise 4: Agenda Corrupts Intuition
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="8" data-clicks='[[{"spid":"a1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"a2","cls":"entr","delay":0,"filter":"wipe(down)","motion":"","dur":"600"}],[{"spid":"a3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Premise badge -->
+  <div style="position:absolute;right:6%;top:5%;background:#9333ea;border-radius:20px;padding:calc(4pt * var(--scale)) calc(12pt * var(--scale))">
+    <span style="font-size:calc(10.0pt * var(--scale));color:#fff;text-transform:uppercase;letter-spacing:1px"><b>Premise 4</b></span>
+  </div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="at" style="position:absolute;left:6%;top:5%;width:65%;min-height:10%">
+    <p><span style="font-size:calc(28.0pt * var(--scale));color:#1e1145"><b>Agenda Corrupts Intuition</b></span></p>
+  </div>
+
+  <!-- Core principle -->
+  <div class="shape anim-hidden" data-spid="a1" style="position:absolute;left:6%;top:22%;width:88%;min-height:14%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:12px;padding:calc(14pt * var(--scale)) calc(18pt * var(--scale))">
+      <p><span style="font-size:calc(16.0pt * var(--scale));color:#1e1145"><b>Innocence is an agendaless state</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(12.0pt * var(--scale));color:#555">When there is something at stake — when you <em>need</em> a specific answer — intuition disappears. The faculty requires that you have nothing riding on the outcome.</span></p>
+    </div>
+  </div>
+
+  <!-- Dysfunctional applications -->
+  <div class="shape anim-hidden" data-spid="a2" style="position:absolute;left:6%;top:46%;width:88%;min-height:22%;opacity:0;visibility:hidden">
+    <div style="background:#fee2e2;border-radius:12px;border:1px solid #fca5a5;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(11.0pt * var(--scale));color:#991b1b;text-transform:uppercase;letter-spacing:1px"><b>Dysfunctional applications</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">Using intuition to satisfy low-level agendas <b>corrupts</b> the faculty:</span></p>
+      <div style="display:flex;flex-wrap:wrap;gap:calc(6pt * var(--scale));margin-top:calc(6pt * var(--scale))">
+        <span style="background:#fff;border:1px solid #fca5a5;border-radius:6px;padding:calc(4pt * var(--scale)) calc(8pt * var(--scale));font-size:calc(10.0pt * var(--scale));color:#991b1b">"Does he love me?"</span>
+        <span style="background:#fff;border:1px solid #fca5a5;border-radius:6px;padding:calc(4pt * var(--scale)) calc(8pt * var(--scale));font-size:calc(10.0pt * var(--scale));color:#991b1b">Stock market predictions</span>
+        <span style="background:#fff;border:1px solid #fca5a5;border-radius:6px;padding:calc(4pt * var(--scale)) calc(8pt * var(--scale));font-size:calc(10.0pt * var(--scale));color:#991b1b">Seeking reassurance</span>
+        <span style="background:#fff;border:1px solid #fca5a5;border-radius:6px;padding:calc(4pt * var(--scale)) calc(8pt * var(--scale));font-size:calc(10.0pt * var(--scale));color:#991b1b">Control &amp; certainty</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolution -->
+  <div class="shape anim-hidden" data-spid="a3" style="position:absolute;left:15%;top:76%;width:70%;min-height:10%;opacity:0;visibility:hidden;text-align:center">
+    <p><span style="font-size:calc(16.0pt * var(--scale));color:#7c3aed;font-style:italic"><b>"When something is at stake,<br>intuition disappears."</b></span></p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 9 — Premise 5: No Fixing, No Coaching
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="9" data-clicks='[[{"spid":"nf1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"nf2","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"nf3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Premise badge -->
+  <div style="position:absolute;right:6%;top:5%;background:#7c3aed;border-radius:20px;padding:calc(4pt * var(--scale)) calc(12pt * var(--scale))">
+    <span style="font-size:calc(10.0pt * var(--scale));color:#fff;text-transform:uppercase;letter-spacing:1px"><b>Premise 5</b></span>
+  </div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="nft" style="position:absolute;left:6%;top:5%;width:65%;min-height:10%">
+    <p><span style="font-size:calc(28.0pt * var(--scale));color:#1e1145"><b>No Fixing. No Coaching.</b></span></p>
+  </div>
+
+  <!-- Be a clean channel -->
+  <div class="shape anim-hidden" data-spid="nf1" style="position:absolute;left:6%;top:22%;width:88%;min-height:16%;opacity:0;visibility:hidden">
+    <div style="background:#f8f5ff;border-radius:12px;padding:calc(14pt * var(--scale)) calc(18pt * var(--scale))">
+      <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Be a clean channel</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555">In readings or practice, the discipline is to deliver what is <b>obvious</b> and what <b>occurs to you</b> — without wrapping it in advice, solutions, or rescue.</span></p>
+    </div>
+  </div>
+
+  <!-- Two columns: NOT this / THIS -->
+  <div class="shape anim-hidden" data-spid="nf2" style="position:absolute;left:6%;top:46%;width:42%;min-height:22%;opacity:0;visibility:hidden">
+    <div style="background:#fee2e2;border-radius:12px;padding:calc(12pt * var(--scale)) calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(12.0pt * var(--scale));color:#991b1b"><b>&#10005; Not this</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">"You should try..."</span></p>
+      <p style="margin-top:calc(3pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">"What if you..."</span></p>
+      <p style="margin-top:calc(3pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">"The solution is..."</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888;font-style:italic">Rescuer mode = agenda</span></p>
+    </div>
+  </div>
+
+  <div class="shape anim-hidden" data-spid="nf3" style="position:absolute;left:52%;top:46%;width:42%;min-height:22%;opacity:0;visibility:hidden">
+    <div style="background:#f0fdf4;border-radius:12px;padding:calc(12pt * var(--scale)) calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(12.0pt * var(--scale));color:#166534"><b>&#10003; This</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">"What I notice is..."</span></p>
+      <p style="margin-top:calc(3pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">"What occurs to me is..."</span></p>
+      <p style="margin-top:calc(3pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#444">"What jumps out is..."</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888;font-style:italic">Clean channel = no agenda</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 10 — Getting Into Innocence (method steps 1-3)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="10" data-clicks='[[{"spid":"m1","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}],[{"spid":"m2","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}],[{"spid":"m3","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}]]' style="background:linear-gradient(180deg,#faf8ff 0%,#f3eeff 100%)">
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="mt" style="position:absolute;left:6%;top:4%;width:88%;min-height:10%">
+    <p><span style="font-size:calc(22.0pt * var(--scale));color:#1e1145"><b>Getting Into Innocence</b></span></p>
+    <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">A repeatable on-ramp</span></p>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="shape anim-hidden" data-spid="m1" style="position:absolute;left:6%;top:18%;width:88%;min-height:18%;opacity:0;visibility:hidden">
+    <div style="display:flex;align-items:flex-start;gap:calc(12pt * var(--scale))">
+      <div style="min-width:calc(36pt * var(--scale));height:calc(36pt * var(--scale));background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:calc(18.0pt * var(--scale));color:#fff"><b>1</b></span>
+      </div>
+      <div>
+        <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Let go of the need to know</b></span></p>
+        <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555;font-style:italic">"Allow yourself to be empty and not know."</span></p>
+        <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Release the need to understand. Surrender the grip on certainty.</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="shape anim-hidden" data-spid="m2" style="position:absolute;left:6%;top:42%;width:88%;min-height:18%;opacity:0;visibility:hidden">
+    <div style="display:flex;align-items:flex-start;gap:calc(12pt * var(--scale))">
+      <div style="min-width:calc(36pt * var(--scale));height:calc(36pt * var(--scale));background:#a855f7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:calc(18.0pt * var(--scale));color:#fff"><b>2</b></span>
+      </div>
+      <div>
+        <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Drop into the creative child</b></span></p>
+        <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555;font-style:italic">"Always go back to the inner child... the child in innocence."</span></p>
+        <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Innocence is an emptiness — a receptive state of mind.</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="shape anim-hidden" data-spid="m3" style="position:absolute;left:6%;top:66%;width:88%;min-height:18%;opacity:0;visibility:hidden">
+    <div style="display:flex;align-items:flex-start;gap:calc(12pt * var(--scale))">
+      <div style="min-width:calc(36pt * var(--scale));height:calc(36pt * var(--scale));background:#6d28d9;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:calc(18.0pt * var(--scale));color:#fff"><b>3</b></span>
+      </div>
+      <div>
+        <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Relax the tension of needing certainty</b></span></p>
+        <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555;font-style:italic">"Hang out with that tension and just let go."</span></p>
+        <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Needing to know is a tension. Recognize it. Breathe. Release.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 11 — Getting Into Innocence (method steps 4-6)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="11" data-clicks='[[{"spid":"m4","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}],[{"spid":"m5","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}],[{"spid":"m6","cls":"entr","delay":0,"filter":"wipe(right)","motion":"","dur":"600"}]]' style="background:linear-gradient(180deg,#faf8ff 0%,#f3eeff 100%)">
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="mt2" style="position:absolute;left:6%;top:4%;width:88%;min-height:10%">
+    <p><span style="font-size:calc(22.0pt * var(--scale));color:#1e1145"><b>Getting Into Innocence</b></span></p>
+    <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">continued</span></p>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="shape anim-hidden" data-spid="m4" style="position:absolute;left:6%;top:18%;width:88%;min-height:18%;opacity:0;visibility:hidden">
+    <div style="display:flex;align-items:flex-start;gap:calc(12pt * var(--scale))">
+      <div style="min-width:calc(36pt * var(--scale));height:calc(36pt * var(--scale));background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:calc(18.0pt * var(--scale));color:#fff"><b>4</b></span>
+      </div>
+      <div>
+        <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Observe the obvious</b></span></p>
+        <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555">Observe what <b>jumps out</b> — what is obvious — without forcing interpretation.</span></p>
+        <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Don't analyze. Notice. What draws your attention?</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="shape anim-hidden" data-spid="m5" style="position:absolute;left:6%;top:42%;width:88%;min-height:18%;opacity:0;visibility:hidden">
+    <div style="display:flex;align-items:flex-start;gap:calc(12pt * var(--scale))">
+      <div style="min-width:calc(36pt * var(--scale));height:calc(36pt * var(--scale));background:#a855f7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:calc(18.0pt * var(--scale));color:#fff"><b>5</b></span>
+      </div>
+      <div>
+        <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Go with the first thing you get</b></span></p>
+        <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555">Stay with the obvious. Always assume there's more.</span></p>
+        <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">The first impulse is the cleanest. The second is the editor.</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="shape anim-hidden" data-spid="m6" style="position:absolute;left:6%;top:66%;width:88%;min-height:18%;opacity:0;visibility:hidden">
+    <div style="display:flex;align-items:flex-start;gap:calc(12pt * var(--scale))">
+      <div style="min-width:calc(36pt * var(--scale));height:calc(36pt * var(--scale));background:#6d28d9;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:calc(18.0pt * var(--scale));color:#fff"><b>6</b></span>
+      </div>
+      <div>
+        <p><span style="font-size:calc(15.0pt * var(--scale));color:#1e1145"><b>Unpack with imagination</b></span></p>
+        <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(11.0pt * var(--scale));color:#555;font-style:italic">"Innocence, observe the obvious, make it up."</span></p>
+        <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Imagination is the "psychic generator" — without pretending you're causing it.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 12 — Rules of Intuition
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="12" data-clicks='[[{"spid":"r1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"400"},{"spid":"r2","cls":"entr","delay":100,"filter":"fade","motion":"","dur":"400"}],[{"spid":"r3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"400"},{"spid":"r4","cls":"entr","delay":100,"filter":"fade","motion":"","dur":"400"}],[{"spid":"r5","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"400"},{"spid":"r6","cls":"entr","delay":100,"filter":"fade","motion":"","dur":"400"}],[{"spid":"r7","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"400"},{"spid":"r8","cls":"entr","delay":100,"filter":"fade","motion":"","dur":"400"}]]'>
+  <!-- Top accent -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="rt" style="position:absolute;left:6%;top:4%;width:88%;min-height:8%">
+    <p><span style="font-size:calc(26.0pt * var(--scale));color:#1e1145"><b>Rules of Intuition</b></span></p>
+    <p style="margin-top:calc(2pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:#888">Practical guardrails</span></p>
+  </div>
+
+  <!-- Rule 1 -->
+  <div class="shape anim-hidden" data-spid="r1" style="position:absolute;left:6%;top:18%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#1e1145;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#a855f7">&#10005;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>No coaching. No fixing.</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 2 -->
+  <div class="shape anim-hidden" data-spid="r2" style="position:absolute;left:52%;top:18%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#1e1145;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#a855f7">&#10005;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>No predictive information</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 3 -->
+  <div class="shape anim-hidden" data-spid="r3" style="position:absolute;left:6%;top:34%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#7c3aed;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#fff">&#9829;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>Be of service</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 4 -->
+  <div class="shape anim-hidden" data-spid="r4" style="position:absolute;left:52%;top:34%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#7c3aed;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#fff">&#10226;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>Return to innocence</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 5 -->
+  <div class="shape anim-hidden" data-spid="r5" style="position:absolute;left:6%;top:50%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#1e1145;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#a855f7">&#9889;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>Go with the first thing</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 6 -->
+  <div class="shape anim-hidden" data-spid="r6" style="position:absolute;left:52%;top:50%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#1e1145;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#a855f7">&#128065;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>Stay with the obvious</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 7 -->
+  <div class="shape anim-hidden" data-spid="r7" style="position:absolute;left:6%;top:66%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#7c3aed;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#fff">&#8734;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>Always assume there's more</b></span>
+    </div>
+  </div>
+
+  <!-- Rule 8 -->
+  <div class="shape anim-hidden" data-spid="r8" style="position:absolute;left:52%;top:66%;width:43%;min-height:12%;opacity:0;visibility:hidden">
+    <div style="background:#7c3aed;border-radius:10px;padding:calc(10pt * var(--scale)) calc(14pt * var(--scale));display:flex;align-items:center;gap:calc(8pt * var(--scale))">
+      <span style="font-size:calc(16.0pt * var(--scale));color:#fff">&#127919;</span>
+      <span style="font-size:calc(13.0pt * var(--scale));color:#fff"><b>Be specific</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 13 — The Paradox
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="13" data-clicks='[[{"spid":"px1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"800"}],[{"spid":"px2","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"800"}],[{"spid":"px3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"800"}],[{"spid":"px4","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"600"},{"spid":"px4","cls":"emph","delay":600,"filter":"","motion":"","dur":"800"}]]' style="background:linear-gradient(135deg,#0f0a1a 0%,#1e1145 40%,#12082a 100%)">
+  <!-- Subtle radial glow -->
+  <div style="position:absolute;top:30%;left:50%;width:70%;height:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(124,58,237,0.12) 0%,transparent 70%);pointer-events:none"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="pxt" style="position:absolute;left:10%;top:6%;width:80%;min-height:8%;text-align:center">
+    <p><span style="font-size:calc(13.0pt * var(--scale));color:rgba(167,139,250,0.7);text-transform:uppercase;letter-spacing:3px">The Paradox to Teach</span></p>
+  </div>
+
+  <!-- Line 1 -->
+  <div class="shape anim-hidden" data-spid="px1" style="position:absolute;left:8%;top:20%;width:84%;min-height:12%;opacity:0;visibility:hidden;text-align:center">
+    <p><span style="font-size:calc(22.0pt * var(--scale));color:#fff"><b>The harder you try to be intuitive,<br>the <em>less</em> intuitive you become.</b></span></p>
+  </div>
+
+  <!-- Line 2 -->
+  <div class="shape anim-hidden" data-spid="px2" style="position:absolute;left:12%;top:44%;width:76%;min-height:10%;opacity:0;visibility:hidden;text-align:center">
+    <p><span style="font-size:calc(15.0pt * var(--scale));color:rgba(255,255,255,0.7)">Effort belongs to the <b style="color:#ef4444">conscious mind</b>.</span></p>
+    <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(15.0pt * var(--scale));color:rgba(255,255,255,0.7)">Intuition lives in <b style="color:#a855f7">effortlessness</b>.</span></p>
+  </div>
+
+  <!-- Line 3 -->
+  <div class="shape anim-hidden" data-spid="px3" style="position:absolute;left:12%;top:64%;width:76%;min-height:10%;opacity:0;visibility:hidden;text-align:center">
+    <p><span style="font-size:calc(14.0pt * var(--scale));color:rgba(255,255,255,0.6)">The instruction isn't <b style="color:#ef4444">"try harder"</b></span></p>
+    <p style="margin-top:calc(4pt * var(--scale))"><span style="font-size:calc(14.0pt * var(--scale));color:rgba(255,255,255,0.6)">— it's <b style="color:#a855f7">"get out of the way."</b></span></p>
+  </div>
+
+  <!-- Final emphasis -->
+  <div class="shape anim-hidden" data-spid="px4" style="position:absolute;left:10%;top:82%;width:80%;min-height:10%;opacity:0;visibility:hidden;text-align:center">
+    <div style="background:linear-gradient(135deg,rgba(124,58,237,0.25),rgba(168,85,247,0.15));border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:calc(10pt * var(--scale)) calc(16pt * var(--scale))">
+      <p><span style="font-size:calc(16.0pt * var(--scale));color:#a855f7"><b>That's what innocence really is:<br>getting yourself out of the way.</b></span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 14 — Summary / Close
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-slide="14" data-clicks='[[{"spid":"s1","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"s2","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}],[{"spid":"s3","cls":"entr","delay":0,"filter":"fade","motion":"","dur":"500"}]]' style="background:linear-gradient(135deg,#0f0a1a 0%,#1e1145 40%,#12082a 100%)">
+  <!-- Subtle radial glow -->
+  <div style="position:absolute;top:15%;left:50%;width:60%;height:40%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(124,58,237,0.12) 0%,transparent 70%);pointer-events:none"></div>
+
+  <!-- Title -->
+  <div class="shape" data-spid="st" style="position:absolute;left:10%;top:8%;width:80%;min-height:10%;text-align:center">
+    <p><span style="font-size:calc(30.0pt * var(--scale));color:#fff"><b>The Path of Intuition</b></span></p>
+  </div>
+
+  <!-- Three pillars -->
+  <div class="shape anim-hidden" data-spid="s1" style="position:absolute;left:6%;top:26%;width:28%;min-height:35%;opacity:0;visibility:hidden">
+    <div style="background:rgba(124,58,237,0.15);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:calc(14pt * var(--scale));text-align:center;height:100%">
+      <p><span style="font-size:calc(28.0pt * var(--scale));color:#a855f7">&#9675;</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(14.0pt * var(--scale));color:#fff"><b>Return to Innocence</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:rgba(255,255,255,0.6)">Let go of knowing.<br>Be empty. Be receptive.<br>Drop into the creative child.</span></p>
+    </div>
+  </div>
+
+  <div class="shape anim-hidden" data-spid="s2" style="position:absolute;left:37%;top:26%;width:28%;min-height:35%;opacity:0;visibility:hidden">
+    <div style="background:rgba(124,58,237,0.15);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:calc(14pt * var(--scale));text-align:center;height:100%">
+      <p><span style="font-size:calc(28.0pt * var(--scale));color:#a855f7">&#9673;</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(14.0pt * var(--scale));color:#fff"><b>Observe &amp; Receive</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:rgba(255,255,255,0.6)">Go with the first thing.<br>Stay with the obvious.<br>Own what you get.</span></p>
+    </div>
+  </div>
+
+  <div class="shape anim-hidden" data-spid="s3" style="position:absolute;left:68%;top:26%;width:28%;min-height:35%;opacity:0;visibility:hidden">
+    <div style="background:rgba(124,58,237,0.15);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:calc(14pt * var(--scale));text-align:center;height:100%">
+      <p><span style="font-size:calc(28.0pt * var(--scale));color:#a855f7">&#10022;</span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(14.0pt * var(--scale));color:#fff"><b>Be a Clean Channel</b></span></p>
+      <p style="margin-top:calc(6pt * var(--scale))"><span style="font-size:calc(10.0pt * var(--scale));color:rgba(255,255,255,0.6)">No fixing. No coaching.<br>No agenda. No prediction.<br>Just what is obvious.</span></p>
+    </div>
+  </div>
+
+  <!-- Bottom tagline -->
+  <div class="shape" data-spid="sbot" style="position:absolute;left:10%;top:72%;width:80%;min-height:12%;text-align:center">
+    <div style="border-top:1px solid rgba(167,139,250,0.2);padding-top:calc(14pt * var(--scale))">
+      <p><span style="font-size:calc(16.0pt * var(--scale));color:rgba(255,255,255,0.5);font-style:italic">"Get out of the way — and let the genius within speak."</span></p>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div style="position:absolute;left:0;bottom:0;width:100%;height:8%;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center">
+    <span style="font-size:calc(11.0pt * var(--scale));color:rgba(167,139,250,0.5);letter-spacing:1px">The Coherence Scale</span>
+  </div>
+</section>
+
+</div><!-- end slideCanvas -->
+
+<script>
+(function() {
+  'use strict';
+
+  var canvas, slides, totalSlides, currentSlide = 0, clickIndex = 0;
+  var counterEl, progressBar;
+
+  /* ─── Scaling ─── */
+  function computeScale() {
+    var W = window.innerWidth, H = window.innerHeight - 44;
+    var sw = W / 720, sh = H / 540;
+    var s = Math.min(sw, sh, 3);
+    var r = document.documentElement;
+    r.style.setProperty('--scale', s.toFixed(4));
+    r.style.setProperty('--slide-w', (720 * s).toFixed(1) + 'px');
+    r.style.setProperty('--slide-h', (540 * s).toFixed(1) + 'px');
+  }
+
+  /* ─── Click group parsing ─── */
+  function getClickGroups(slideEl) {
+    var raw = slideEl.getAttribute('data-clicks');
+    if (!raw) return [];
+    try { return JSON.parse(raw); } catch(e) { return []; }
+  }
+
+  /* ─── Reset slide animations ─── */
+  function resetSlideAnimations(slideEl) {
+    var shapes = slideEl.querySelectorAll('.shape[data-spid]');
+    shapes.forEach(function(el) {
+      var groups = getClickGroups(slideEl);
+      var isAnimated = false;
+      groups.forEach(function(g) {
+        if (!Array.isArray(g)) return;
+        g.forEach(function(step) {
+          if (step.spid === el.getAttribute('data-spid')) isAnimated = true;
+        });
+      });
+      if (isAnimated) {
+        el.classList.add('anim-hidden');
+        el.style.opacity = '0';
+        el.style.visibility = 'hidden';
+        el.style.animation = '';
+        el.style.clipPath = '';
+        el.style.transition = '';
+        el.style.transform = '';
+        el._motionX = 0;
+        el._motionY = 0;
+      }
+    });
+  }
+
+  /* ─── Play a single animation step ─── */
+  function playStep(slideEl, step, instant) {
+    var el = slideEl.querySelector('[data-spid="' + step.spid + '"]');
+    if (!el) return;
+
+    var dur = parseInt(step.dur, 10) || 500;
+    var delay = parseInt(step.delay, 10) || 0;
+    var durS = (dur / 1000).toFixed(3) + 's';
+
+    if (instant) {
+      if (step.cls === 'entr') {
+        el.classList.remove('anim-entrance'); el.classList.remove('anim-hidden');
+        el.style.visibility = 'visible';
+        el.style.opacity = '1';
+        el.style.animation = '';
+        el.style.clipPath = '';
+        applyMotion(el, step, slideEl, true);
+      } else if (step.cls === 'exit') {
+        el.style.opacity = '0';
+        el.style.visibility = 'hidden';
+      } else if (step.cls === 'path') {
+        applyMotion(el, step, slideEl, true);
+      }
+      return;
+    }
+
+    function doEntrance() {
+      el.classList.remove('anim-entrance'); el.classList.remove('anim-hidden');
+      el.style.visibility = 'visible';
+
+      function lockVisible() {
+        el.style.opacity = '1';
+        el.style.animation = '';
+        el.style.clipPath = '';
+        el.removeEventListener('animationend', lockVisible);
+      }
+      el.addEventListener('animationend', lockVisible);
+
+      var filter = (step.filter || '').toLowerCase();
+      if (filter === 'fade') {
+        el.style.animation = 'fadeSlideIn ' + durS + ' ease forwards';
+      } else if (filter.indexOf('wipe') === 0) {
+        el.style.opacity = '1';
+        var dir = filter.match(/\((\w+)\)/);
+        var d = dir ? dir[1].toLowerCase() : 'right';
+        var animName = 'wipe' + d.charAt(0).toUpperCase() + d.slice(1);
+        el.style.animation = animName + ' ' + durS + ' ease forwards';
+      } else {
+        el.style.animation = 'fadeIn ' + durS + ' ease forwards';
+      }
+      applyMotion(el, step, slideEl, false);
+    }
+
+    function doExit() {
+      el.style.transition = 'opacity ' + durS + ' ease';
+      el.style.opacity = '0';
+      el.addEventListener('transitionend', function handler() {
+        el.style.visibility = 'hidden';
+        el.removeEventListener('transitionend', handler);
+      });
+    }
+
+    function doEmph() {
+      el.style.animation = 'emphPulse ' + durS + ' ease';
+      el.addEventListener('animationend', function handler() {
+        el.style.animation = '';
+        el.removeEventListener('animationend', handler);
+      });
+    }
+
+    function doPath() {
+      applyMotion(el, step, slideEl, false);
+    }
+
+    var action;
+    if (step.cls === 'entr') action = doEntrance;
+    else if (step.cls === 'exit') action = doExit;
+    else if (step.cls === 'emph') action = doEmph;
+    else if (step.cls === 'path') action = doPath;
+    else return;
+
+    if (delay > 0) {
+      setTimeout(action, delay);
+    } else {
+      action();
+    }
+  }
+
+  /* ─── Motion path ─── */
+  function applyMotion(el, step, slideEl, instant) {
+    if (!step.motion) return;
+    var tokens = step.motion.trim().split(/\s+/);
+    var startX = 0, startY = 0, endX = 0, endY = 0;
+    for (var i = 0; i < tokens.length; i++) {
+      if (tokens[i] === 'M' && i + 2 < tokens.length) {
+        startX = parseFloat(tokens[i + 1]) || 0;
+        startY = parseFloat(tokens[i + 2]) || 0;
+      }
+      if (tokens[i] === 'L' && i + 2 < tokens.length) {
+        endX = parseFloat(tokens[i + 1]) || 0;
+        endY = parseFloat(tokens[i + 2]) || 0;
+      }
+    }
+    var dx = endX - startX;
+    var dy = endY - startY;
+    var sw = slideEl.offsetWidth || 720;
+    var sh = slideEl.offsetHeight || 540;
+
+    el._motionX = (el._motionX || 0) + dx * sw;
+    el._motionY = (el._motionY || 0) + dy * sh;
+
+    var tx = el._motionX.toFixed(2) + 'px';
+    var ty = el._motionY.toFixed(2) + 'px';
+
+    if (instant) {
+      el.style.transition = 'none';
+      el.style.transform = 'translate(' + tx + ',' + ty + ')';
+      void el.offsetHeight;
+      el.style.transition = '';
+    } else {
+      var dur = (parseInt(step.dur, 10) || 500) / 1000;
+      el.style.transition = 'transform ' + dur.toFixed(3) + 's ease';
+      el.style.transform = 'translate(' + tx + ',' + ty + ')';
+    }
+  }
+
+  /* ─── Play a click group ─── */
+  function playGroup(slideEl, groupIndex, instant) {
+    var groups = getClickGroups(slideEl);
+    if (groupIndex < 0 || groupIndex >= groups.length) return;
+    var group = groups[groupIndex];
+    if (!Array.isArray(group)) return;
+    group.forEach(function(step) {
+      playStep(slideEl, step, instant);
+    });
+  }
+
+  /* ─── Show slide ─── */
+  function showSlide(n, revealAll) {
+    if (n < 0 || n >= totalSlides) return;
+    slides.forEach(function(s, i) {
+      s.classList.toggle('active', i === n);
+    });
+    currentSlide = n;
+    clickIndex = 0;
+
+    var slideEl = slides[n];
+    resetSlideAnimations(slideEl);
+
+    if (revealAll) {
+      var groups = getClickGroups(slideEl);
+      for (var g = 0; g < groups.length; g++) {
+        playGroup(slideEl, g, true);
+      }
+      clickIndex = groups.length;
+    }
+
+    updateUI();
+  }
+
+  /* ─── Advance ─── */
+  function advance() {
+    var slideEl = slides[currentSlide];
+    var groups = getClickGroups(slideEl);
+    if (clickIndex < groups.length) {
+      playGroup(slideEl, clickIndex, false);
+      clickIndex++;
+      updateUI();
+    } else {
+      if (currentSlide < totalSlides - 1) {
+        showSlide(currentSlide + 1, false);
+      }
+    }
+  }
+
+  /* ─── Go back ─── */
+  function goBack() {
+    if (clickIndex > 0) {
+      var slideEl = slides[currentSlide];
+      resetSlideAnimations(slideEl);
+      var target = clickIndex - 1;
+      for (var g = 0; g < target; g++) {
+        playGroup(slideEl, g, true);
+      }
+      clickIndex = target;
+      updateUI();
+    } else {
+      if (currentSlide > 0) {
+        showSlide(currentSlide - 1, true);
+      }
+    }
+  }
+
+  /* ─── UI updates ─── */
+  function updateUI() {
+    if (counterEl) {
+      counterEl.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    }
+    var pct = totalSlides > 1
+      ? ((currentSlide / (totalSlides - 1)) * 100).toFixed(1) + '%'
+      : '0%';
+    document.documentElement.style.setProperty('--progress', pct);
+    try {
+      localStorage.setItem('pres-intuition-slide', currentSlide);
+      localStorage.setItem('pres-intuition-click', clickIndex);
+    } catch(e) {}
+  }
+
+  /* ─── Slide jump ─── */
+  function openJump() {
+    var overlay = document.getElementById('jumpOverlay');
+    var input = document.getElementById('jumpInput');
+    if (!overlay || !input) return;
+    overlay.classList.add('open');
+    input.value = '';
+    input.setAttribute('max', totalSlides);
+    input.placeholder = '1 \u2013 ' + totalSlides;
+    input.focus();
+  }
+  function closeJump() {
+    var overlay = document.getElementById('jumpOverlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+  function doJump() {
+    var input = document.getElementById('jumpInput');
+    if (!input) return;
+    var n = parseInt(input.value, 10);
+    if (n >= 1 && n <= totalSlides) {
+      closeJump();
+      showSlide(n - 1, true);
+    }
+  }
+
+  /* ─── Touch / swipe ─── */
+  var touchStartX = 0, touchStartY = 0;
+  function onTouchStart(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }
+  function onTouchEnd(e) {
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    var dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) < 40 && Math.abs(dy) < 40) {
+      advance();
+      return;
+    }
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx < -50) advance();
+      else if (dx > 50) goBack();
+    }
+  }
+
+  /* ─── Keyboard ─── */
+  function onKeyDown(e) {
+    if (document.getElementById('modalOverlay') &&
+        document.getElementById('modalOverlay').classList.contains('open')) return;
+    if (document.getElementById('jumpOverlay') &&
+        document.getElementById('jumpOverlay').classList.contains('open')) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    switch (e.key) {
+      case 'ArrowRight': case ' ': case 'Enter':
+        e.preventDefault(); advance(); break;
+      case 'ArrowLeft': case 'Backspace':
+        e.preventDefault(); goBack(); break;
+      case 'Home':
+        e.preventDefault(); showSlide(0, false); break;
+      case 'End':
+        e.preventDefault(); showSlide(totalSlides - 1, true); break;
+      case 'g': case 'G':
+        e.preventDefault(); openJump(); break;
+      case 'Escape':
+        closeJump(); break;
+    }
+  }
+
+  /* ─── Suggest Edit modal ─── */
+  function initModal() {
+    var overlay = document.getElementById('modalOverlay');
+    var btn = document.getElementById('suggestBtn');
+    var cancelBtn = document.getElementById('modalCancel');
+    var submitBtn = document.getElementById('modalSubmit');
+    var nameInput = document.getElementById('suggestName');
+    var textInput = document.getElementById('suggestText');
+
+    if (!overlay || !btn) return;
+
+    btn.addEventListener('click', function() {
+      overlay.classList.add('open');
+      nameInput.focus();
+    });
+    cancelBtn.addEventListener('click', function() {
+      overlay.classList.remove('open');
+    });
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+
+    submitBtn.addEventListener('click', function() {
+      var name = nameInput.value.trim();
+      var suggestion = textInput.value.trim();
+      if (!suggestion) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      var slideNum = currentSlide + 1;
+      var payload = {
+        name: name || 'Anonymous',
+        suggestion: suggestion,
+        slide: slideNum,
+        timestamp: new Date().toISOString()
+      };
+
+      fetch('https://script.google.com/macros/s/AKfycbwIR0RfKpz9-hNzE2qrFyUUdCaOxCGT2Vx7atbNfgTVuqlz6ka_j3rMcLTmmFfQVavOKg/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function() {
+        showToast('Suggestion submitted. Thank you!');
+        overlay.classList.remove('open');
+        nameInput.value = '';
+        textInput.value = '';
+      }).catch(function() {
+        showToast('Could not submit. Please try again.');
+      }).finally(function() {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      });
+    });
+  }
+
+  /* ─── Toast ─── */
+  function showToast(msg) {
+    var toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 3000);
+  }
+
+  /* ─── Init ─── */
+  function init() {
+    canvas = document.getElementById('slideCanvas');
+    if (!canvas) { console.error('No #slideCanvas found'); return; }
+
+    slides = Array.prototype.slice.call(canvas.querySelectorAll('.slide'));
+    totalSlides = slides.length;
+    counterEl = document.getElementById('slideCounter');
+    progressBar = document.getElementById('progressBar');
+
+    computeScale();
+    window.addEventListener('resize', computeScale);
+
+    var savedSlide = 0;
+    var savedClick = 0;
+    try {
+      var ss = localStorage.getItem('pres-intuition-slide');
+      var sc = localStorage.getItem('pres-intuition-click');
+      if (ss !== null) savedSlide = Math.min(parseInt(ss,10) || 0, totalSlides - 1);
+      if (sc !== null) savedClick = parseInt(sc,10) || 0;
+    } catch(e) {}
+
+    if (totalSlides > 0) {
+      if (savedSlide > 0 || savedClick > 0) {
+        showSlide(savedSlide, false);
+        var slideEl = slides[savedSlide];
+        var groups = getClickGroups(slideEl);
+        var target = Math.min(savedClick, groups.length);
+        for (var g = 0; g < target; g++) {
+          playGroup(slideEl, g, true);
+        }
+        clickIndex = target;
+        updateUI();
+      } else {
+        showSlide(0, false);
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+
+    if (counterEl) {
+      counterEl.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openJump();
+      });
+    }
+
+    var jumpOverlay = document.getElementById('jumpOverlay');
+    var jumpInput = document.getElementById('jumpInput');
+    if (jumpOverlay) {
+      jumpOverlay.addEventListener('click', function(e) {
+        if (e.target === jumpOverlay) closeJump();
+      });
+    }
+    if (jumpInput) {
+      jumpInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); doJump(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeJump(); }
+        e.stopPropagation();
+      });
+    }
+    canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+    canvas.addEventListener('touchend', onTouchEnd, { passive: true });
+    canvas.addEventListener('click', function(e) {
+      if (e.target.closest('#navbar') || e.target.closest('#suggestBtn') ||
+          e.target.closest('#modalOverlay')) return;
+      advance();
+    });
+
+    var prevBtn = document.getElementById('navPrev');
+    var nextBtn = document.getElementById('navNext');
+    if (prevBtn) prevBtn.addEventListener('click', function(e) { e.stopPropagation(); goBack(); });
+    if (nextBtn) nextBtn.addEventListener('click', function(e) { e.stopPropagation(); advance(); });
+
+    initModal();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.presFramework = {
+    advance: advance,
+    goBack: goBack,
+    showSlide: showSlide,
+    getState: function() { return { currentSlide: currentSlide, clickIndex: clickIndex, totalSlides: totalSlides }; }
+  };
+
+})();
+</script>
+</body>
+</html>
